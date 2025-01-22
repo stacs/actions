@@ -1,0 +1,20 @@
+name: Maven Deploy
+
+on:
+  workflow_call
+
+jobs:
+  maven-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          server-id: 'github'
+      - name: Build
+        run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{secrets.DEPLOY_GITHUB_TOKEN}}
