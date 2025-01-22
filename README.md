@@ -1,1 +1,11 @@
-# actions
+# LTS Team Github Actions
+
+This repository contains Github actions that can be reused within our other repositories.
+General descriptions of the actions are listed below; more information (such as what inputs, if any, they require) can be found within the action's yaml file.
+
+* [maven-install.yaml](.github/workflows/maven-install.yaml): Runs `mvn clean install` for a given maven project.
+* [maven-deploy.yaml](.github/workflows/maven-deploy.yaml): Runs `mvn deploy` in order to deploy the resources generated from [maven-install.yaml](.github/workflows/maven-install.yaml).  This is generally only done for maven projects that use SNAPSHOT versioning.
+* [maven-release.yaml](.github/workflows/maven-release.yaml): Runs `mvn release` for a given maven project in order to finalize the current version and prepare the maven project for the next version.
+* [aws-deploy-dev.yaml](.github/workflows/aws-deploy-dev.yaml): Builds a docker image and pushes it to the given ECR repository within our UVACanvas Dev AWS account.  After this the task definition for the tool will be updated with the new image and the ECS service for the tool will be restarted.  The ECR tags for dev are based on branch names.
+* [aws-deploy-qa.yaml](.github/workflows/aws-deploy-qa.yaml): Pulls the docker image for a particular tool from the tool's ECR repository in our UVACanvas Dev AWS account and pushes it to the tool's ECR repository in our UVACanvas QA AWS account.  After this the task definition for the tool will be updated with the new image and the ECS service for the tool will be restarted.  The ECR tags for QA are based on branch names.
+* [aws-deploy-prod.yaml](.github/workflows/aws-deploy-prod.yaml): Pulls the docker image for a particular tool from the tool's ECR repository in our UVACanvas QA AWS account and pushes it to the tool's ECR repository in our UVACanvas Prod AWS account.  Since this pushes the image to prod, we do not adjust any task definitions or restart any ECS services so that we can do that manually at the time we require.  The ECR tags for prod are based on the tool's version within its pom.xml file.  The prod ECR is also immutable, so if a mistake has been made then a new version will have to be created and deployed.
