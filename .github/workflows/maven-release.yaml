@@ -35,7 +35,7 @@ jobs:
           git config user.name "LTS Bot"
           git config user.email "lts-devs@virginia.edu"
       - name: Release
-        run: mvn --batch-mode clean release:prepare release:perform -DdryRun=${{github.event.inputs.dryRun}} -DreleaseVersion=${{github.event.inputs.releaseVersion}} -DdevelopmentVersion=${{github.event.inputs.developmentVersion}}
+        run: mvn --batch-mode clean release:prepare release:perform -DdryRun=${{inputs.dryRun}} -DreleaseVersion=${{inputs.releaseVersion}} -DdevelopmentVersion=${{inputs.developmentVersion}}
         env:
           GITHUB_TOKEN: ${{secrets.DEPLOY_GITHUB_TOKEN}}
 

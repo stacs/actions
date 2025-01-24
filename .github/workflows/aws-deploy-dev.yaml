@@ -36,7 +36,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ inputs.aws_region }}
           role-to-assume: ${{ secrets.AWS_DEV_ROLE }}
       - name: Login to Amazon ECR
         id: login-ecr
@@ -45,7 +45,7 @@ jobs:
         id: build-image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ env.ECR_REPOSITORY_NAME }}
+          REPOSITORY: ${{ inputs.ecr_repository_name }}
           BRANCH: ${{ github.ref_name }}
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$BRANCH -t $REGISTRY/$REPOSITORY:latest .
@@ -55,19 +55,19 @@ jobs:
 
       - name: Download task definition
         env:
-          TASK_DEF: ${{ env.ECS_TASK_DEFINITION_NAME }}
+          TASK_DEF: ${{ inputs.ecs_task_definition_name }}
         run: aws ecs describe-task-definition --task-definition $TASK_DEF --query taskDefinition > task-definition.json
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          container-name: ${{ inputs.ecs_container_name }}
           image: ${{ steps.build-image.outputs.image }}
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE_NAME }}
-          cluster: ${{ env.ECS_CLUSTER_NAME }}
+          service: ${{ inputs.ecs_service_name }}
+          cluster: ${{ inputs.ecs_cluster_name }}
           wait-for-service-stability: true
