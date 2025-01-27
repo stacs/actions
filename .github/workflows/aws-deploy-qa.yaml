@@ -23,6 +23,12 @@ on:
         required: true
         type: string
         default: lti-tools
+      dev_image_name:
+        required: true
+        type: string
+      qa_image_name:
+        required: true
+        type: string
 
 permissions:
   id-token: write   # This is required by AWS for requesting the JWT
@@ -33,6 +39,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Configure AWS credentials for dev
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -46,10 +56,11 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr-dev.outputs.registry }}
           REPOSITORY: ${{ inputs.ecr_repository_name }}
-          BRANCH: ${{ github.ref_name }}
+          DEV_IMAGE_NAME: ${{ inputs.dev_image_name }}
+          QA_IMAGE_NAME: ${{ inputs.qa_image_name }}
         run: |
-          docker pull $REGISTRY/$REPOSITORY:$BRANCH
-          docker tag $REGISTRY/$REPOSITORY:$BRANCH $REPOSITORY:$BRANCH
+          docker pull $REGISTRY/$REPOSITORY:$DEV_IMAGE_NAME
+          docker tag $REGISTRY/$REPOSITORY:$DEV_IMAGE_NAME $REPOSITORY:$QA_IMAGE_NAME
 
       - name: Configure AWS credentials for QA
         uses: aws-actions/configure-aws-credentials@v4
@@ -64,11 +75,11 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr-qa.outputs.registry }}
           REPOSITORY: ${{ inputs.ecr_repository_name }}
-          BRANCH: ${{ github.ref_name }}
+          QA_IMAGE_NAME: ${{ inputs.qa_image_name }}
         run: |
-          docker tag $REPOSITORY:$BRANCH $REGISTRY/$REPOSITORY:$BRANCH
-          docker push $REGISTRY/$REPOSITORY:$BRANCH
-          echo "image=$REGISTRY/$REPOSITORY:$BRANCH" >> $GITHUB_OUTPUT
+          docker tag $REPOSITORY:$QA_IMAGE_NAME $REGISTRY/$REPOSITORY:$QA_IMAGE_NAME
+          docker push $REGISTRY/$REPOSITORY:$QA_IMAGE_NAME
+          echo "image=$REGISTRY/$REPOSITORY:$QA_IMAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Download task definition
         env:

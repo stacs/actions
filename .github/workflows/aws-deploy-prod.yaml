@@ -10,6 +10,12 @@ on:
       ecr_repository_name:
         required: true
         type: string
+      qa_image_name:
+        required: true
+        type: string
+      prod_image_name:
+        required: true
+        type: string
 
 permissions:
   id-token: write   # This is required by AWS for requesting the JWT
@@ -20,9 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get Artifact Version
-        run: echo "ARTIFACT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Configure AWS credentials for QA
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -36,11 +43,11 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr-qa.outputs.registry }}
           REPOSITORY: ${{ inputs.ecr_repository_name }}
-          BRANCH: ${{ github.ref_name }}
-          IMAGE_TAG: ${{ env.ARTIFACT_VERSION }}
+          QA_IMAGE_NAME: ${{ inputs.qa_image_name }}
+          PROD_IMAGE_NAME: ${{ inputs.prod_image_name }}
         run: |
-          docker pull $REGISTRY/$REPOSITORY:$BRANCH
-          docker tag $REGISTRY/$REPOSITORY:$BRANCH $REPOSITORY:$IMAGE_TAG
+          docker pull $REGISTRY/$REPOSITORY:$QA_IMAGE_NAME
+          docker tag $REGISTRY/$REPOSITORY:$QA_IMAGE_NAME $REPOSITORY:$PROD_IMAGE_NAME
 
       - name: Configure AWS credentials for prod
         uses: aws-actions/configure-aws-credentials@v4
@@ -55,7 +62,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr-prod.outputs.registry }}
           REPOSITORY: ${{ inputs.ecr_repository_name }}
-          IMAGE_TAG: ${{ env.ARTIFACT_VERSION }}
+          PROD_IMAGE_NAME: ${{ inputs.prod_image_name }}
         run: |
-          docker tag $REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker tag $REPOSITORY:$PROD_IMAGE_NAME $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME
+          docker push $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME

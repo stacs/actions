@@ -33,6 +33,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download Maven target directory
+        uses: actions/download-artifact@v4
+        with:
+          name: target-dir
+          path: target/
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -41,6 +50,9 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+      - name: Get short Git SHA
+        id: short-git-sha
+        run: echo "SHORT_GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
       - name: Build, tag, and push docker image to Amazon ECR
         id: build-image
         env:
@@ -48,10 +60,11 @@ jobs:
           REPOSITORY: ${{ inputs.ecr_repository_name }}
           BRANCH: ${{ github.ref_name }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$BRANCH -t $REGISTRY/$REPOSITORY:latest .
+          docker build -t $REGISTRY/$REPOSITORY:$SHORT_GIT_SHA -t $REGISTRY/$REPOSITORY:$BRANCH -t $REGISTRY/$REPOSITORY:latest .
+          docker push $REGISTRY/$REPOSITORY:$SHORT_GIT_SHA
           docker push $REGISTRY/$REPOSITORY:$BRANCH
           docker push $REGISTRY/$REPOSITORY:latest
-          echo "image=$REGISTRY/$REPOSITORY:$BRANCH" >> $GITHUB_OUTPUT
+          echo "image=$REGISTRY/$REPOSITORY:$SHORT_GIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Download task definition
         env:
