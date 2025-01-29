@@ -34,11 +34,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           server-id: 'github'
-      - name: Download Maven target directory
-        uses: actions/download-artifact@v4
-        with:
-          name: target-dir
-          path: target/
       - name: Setup Git User
         run: |
           git config user.name "LTS Bot"
