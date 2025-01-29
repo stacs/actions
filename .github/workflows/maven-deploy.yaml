@@ -18,11 +18,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           server-id: 'github'
-      - name: Download Maven target directory
-        uses: actions/download-artifact@v4
-        with:
-          name: target-dir
-          path: target/
       - name: Maven deploy
         run: mvn deploy
         env:
