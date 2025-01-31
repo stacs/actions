@@ -72,6 +72,7 @@ jobs:
         run: |
           docker tag $REPOSITORY:$PROD_IMAGE_NAME $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME
           docker push $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME
+          echo "image=$REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME" >> $GITHUB_OUTPUT
       - name: Download task definition
         env:
           TASK_DEF: ${{ inputs.ecs_task_definition_name }}
