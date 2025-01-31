@@ -10,6 +10,12 @@ on:
       ecr_repository_name:
         required: true
         type: string
+      ecs_task_definition_name:
+        required: true
+        type: string
+      ecs_container_name:
+        required: true
+        type: string
       qa_image_name:
         required: true
         type: string
@@ -66,3 +72,14 @@ jobs:
         run: |
           docker tag $REPOSITORY:$PROD_IMAGE_NAME $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME
           docker push $REGISTRY/$REPOSITORY:$PROD_IMAGE_NAME
+      - name: Download task definition
+        env:
+          TASK_DEF: ${{ inputs.ecs_task_definition_name }}
+        run: aws ecs describe-task-definition --task-definition $TASK_DEF --query taskDefinition > task-definition.json
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.ecs_container_name }}
+          image: ${{ steps.push-image.outputs.image }}
