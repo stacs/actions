@@ -1,11 +1,23 @@
-# LTS Team Github Actions
+# LTS Team GitHub Actions
 
-This repository contains Github actions that can be reused within our other repositories.
-General descriptions of the actions are listed below; more information (such as what inputs, if any, they require) can be found within the action's yaml file.
+This repository contains GitHub actions that can be reused within our other repositories.
+General descriptions of the actions are listed below; more information (such as what inputs, if any, they require) can be found within the action's YAML file.
 
-* [maven-install.yaml](.github/workflows/maven-install.yaml): Runs `mvn clean install` for a given maven project.
-* [maven-deploy.yaml](.github/workflows/maven-deploy.yaml): Runs `mvn deploy` in order to deploy the resources generated from [maven-install.yaml](.github/workflows/maven-install.yaml).  This is generally only done for maven projects that use SNAPSHOT versioning.
-* [maven-release.yaml](.github/workflows/maven-release.yaml): Runs `mvn release` for a given maven project in order to finalize the current version and prepare the maven project for the next version.
-* [aws-deploy-dev.yaml](.github/workflows/aws-deploy-dev.yaml): Builds a docker image and pushes it to the given ECR repository within our UVACanvas Dev AWS account.  After this the task definition for the tool will be updated with the new image and the ECS service for the tool will be restarted.  The ECR tags for dev are based on branch names.
-* [aws-deploy-qa.yaml](.github/workflows/aws-deploy-qa.yaml): Pulls the docker image for a particular tool from the tool's ECR repository in our UVACanvas Dev AWS account and pushes it to the tool's ECR repository in our UVACanvas QA AWS account.  After this the task definition for the tool will be updated with the new image and the ECS service for the tool will be restarted.  The ECR tags for QA are based on branch names.
-* [aws-deploy-prod.yaml](.github/workflows/aws-deploy-prod.yaml): Pulls the docker image for a particular tool from the tool's ECR repository in our UVACanvas QA AWS account and pushes it to the tool's ECR repository in our UVACanvas Prod AWS account.  Since this pushes the image to prod, we do not adjust any task definitions or restart any ECS services so that we can do that manually at the time we require.  The ECR tags for prod are based on the tool's version within its pom.xml file.  The prod ECR is also immutable, so if a mistake has been made then a new version will have to be created and deployed.
+* [maven-install.yaml](.github/workflows/maven-install.yaml): 
+  Runs `mvn clean install` for a given maven project.
+* [maven-deploy.yaml](.github/workflows/maven-deploy.yaml): 
+  Runs `mvn deploy` in order to deploy the resources generated from [maven-install.yaml](.github/workflows/maven-install.yaml).
+  This is generally only done for maven projects that use SNAPSHOT versioning.
+* [maven-release.yaml](.github/workflows/maven-release.yaml):
+  Runs `mvn release` for a given maven project to finalize the current version and prepare the maven project for the next version.
+* [docker-build.yaml](.github/workflows/docker-build.yaml):
+  Builds a docker image and pushes it to an ECR repository within the given AWS account.
+  The docker image will be tagged with the short git commit hash, the branch name, and 'latest'.
+* [docker-copy.yaml](.github/workflows/docker-copy.yaml):
+  Pulls the docker image for a particular tool from the tool's ECR repository in one AWS account and pushes it to the tool's ECR repository in another AWS account.
+  The workflow requires the image name from the 'old' ECR and then requires an image name for the 'new' ECR.
+  The image name can be renamed when copying from the 'old' ECR to put into the 'new' ECR.
+  The prod ECR is also immutable, so if a mistake has been made then a new version will have to be created and deployed.
+* [aws-deploy.yaml](.github/workflows/aws-deploy.yaml):
+  Updates the current task definition of an ECS service with a new image name taken from the ECR repo within an AWS account.
+  The service will then be restarted so that the new image can be spun up as a running container.

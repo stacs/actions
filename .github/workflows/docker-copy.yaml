@@ -1,0 +1,80 @@
+name: Copy docker images from one repo to another
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+        default: us-east-1
+      ecr_repository_name:
+        required: true
+        type: string
+      old_image_name:
+        required: true
+        type: string
+      new_image_name:
+        required: true
+        type: string
+    secrets:
+      old_image_role:
+        required: true
+      new_image_role:
+        required: true
+    outputs:
+      image:
+        description: "The full ARN of the image that was copied and pushed to the ECR repo"
+        value: ${{ jobs.docker-copy.outputs.image }}
+
+permissions:
+  id-token: write   # This is required by AWS for requesting the JWT
+  contents: read    # This is required by AWS for actions/checkout
+
+jobs:
+  docker-copy:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.push-image.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Configure AWS credentials for old environment
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws_region }}
+          role-to-assume: ${{ secrets.old_image_role }}
+      - name: Login to old ECR
+        id: login-ecr-old
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Pull image from old ECR
+        id: pull-image
+        env:
+          REGISTRY: ${{ steps.login-ecr-old.outputs.registry }}
+          REPOSITORY: ${{ inputs.ecr_repository_name }}
+          OLD_IMAGE_NAME: ${{ inputs.old_image_name }}
+          NEW_IMAGE_NAME: ${{ inputs.new_image_name }}
+        run: |
+          docker pull $REGISTRY/$REPOSITORY:$OLD_IMAGE_NAME
+          docker tag $REGISTRY/$REPOSITORY:$OLD_IMAGE_NAME $REPOSITORY:$NEW_IMAGE_NAME
+
+      - name: Configure AWS credentials for new environment
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws_region }}
+          role-to-assume: ${{ secrets.new_image_role }}
+      - name: Login to new ECR
+        id: login-ecr-new
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Push image to new ECR
+        id: push-image
+        env:
+          REGISTRY: ${{ steps.login-ecr-new.outputs.registry }}
+          REPOSITORY: ${{ inputs.ecr_repository_name }}
+          NEW_IMAGE_NAME: ${{ inputs.new_image_name }}
+        run: |
+          docker tag $REPOSITORY:$NEW_IMAGE_NAME $REGISTRY/$REPOSITORY:$NEW_IMAGE_NAME
+          docker push $REGISTRY/$REPOSITORY:$NEW_IMAGE_NAME
+          echo "image=$REGISTRY/$REPOSITORY:$NEW_IMAGE_NAME" >> $GITHUB_OUTPUT

@@ -1,0 +1,65 @@
+name: Deploy to AWS
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+        default: us-east-1
+      ecr_repository_name:
+        required: true
+        type: string
+      ecs_task_definition_name:
+        required: true
+        type: string
+      ecs_container_name:
+        required: true
+        type: string
+      ecs_service_name:
+        type: string
+        description: 'The service to deploy to, if this is blank then we will not do a restart of the service.'
+        default: ''
+      ecs_cluster_name:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
+        default: latest
+    secrets:
+      deploy_role:
+        required: true
+
+permissions:
+  id-token: write   # This is required by AWS for requesting the JWT
+  contents: read    # This is required by AWS for actions/checkout
+
+jobs:
+  aws-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.aws_region }}
+          role-to-assume: ${{ secrets.deploy_role }}
+      - name: Download task definition
+        env:
+          TASK_DEF: ${{ inputs.ecs_task_definition_name }}
+        run: aws ecs describe-task-definition --task-definition $TASK_DEF --query taskDefinition > task-definition.json
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.ecs_container_name }}
+          image: ${{ inputs.image_name }}
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ inputs.ecs_service_name }}
+          cluster: ${{ inputs.ecs_cluster_name }}
+          wait-for-service-stability: true
