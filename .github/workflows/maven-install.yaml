@@ -1,7 +1,7 @@
 name: Maven Install
 
 on:
-  workflow_call
+  workflow_call:
 
 jobs:
   maven-install:
@@ -9,11 +9,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5.2.0
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -23,7 +23,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.DEPLOY_GITHUB_TOKEN}}
       - name: Upload Maven target directory
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: target-dir
           path: target/
