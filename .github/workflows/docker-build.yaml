@@ -4,7 +4,6 @@ on:
   workflow_call:
     inputs:
       aws_region:
-        required: true
         type: string
         default: us-east-1
       ecr_repository_name:
@@ -48,7 +47,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2.1.5
       - name: Get short Git SHA
         id: short-git-sha
-        run: echo "SHORT_GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+        run: echo "SHORT_GIT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
       - name: Build, tag, and push docker image to Amazon ECR
         id: build-image
         env:
@@ -56,8 +55,8 @@ jobs:
           REPOSITORY: ${{ inputs.ecr_repository_name }}
           BRANCH: ${{ github.ref_name }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$SHORT_GIT_SHA -t $REGISTRY/$REPOSITORY:$BRANCH -t $REGISTRY/$REPOSITORY:latest .
-          docker push $REGISTRY/$REPOSITORY:$SHORT_GIT_SHA
-          docker push $REGISTRY/$REPOSITORY:$BRANCH
-          docker push $REGISTRY/$REPOSITORY:latest
-          echo "image=$REGISTRY/$REPOSITORY:$SHORT_GIT_SHA" >> $GITHUB_OUTPUT
+          docker build -t "$REGISTRY/$REPOSITORY:$SHORT_GIT_SHA" -t "$REGISTRY/$REPOSITORY:$BRANCH" -t "$REGISTRY/$REPOSITORY:latest" .
+          docker push "$REGISTRY/$REPOSITORY:$SHORT_GIT_SHA"
+          docker push "$REGISTRY/$REPOSITORY:$BRANCH"
+          docker push "$REGISTRY/$REPOSITORY:latest"
+          echo "image=$REGISTRY/$REPOSITORY:$SHORT_GIT_SHA" >> "$GITHUB_OUTPUT"

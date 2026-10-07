@@ -4,7 +4,6 @@ on:
   workflow_call:
     inputs:
       aws_region:
-        required: true
         type: string
         default: us-east-1
       ecs_task_definition_file:
@@ -21,7 +20,6 @@ on:
         required: true
         type: string
       image_name:
-        required: true
         type: string
         default: latest
     secrets:
