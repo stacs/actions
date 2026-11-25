@@ -53,13 +53,13 @@ jobs:
           envsubst < ${{ inputs.ecs_task_definition_file }} > task-definition-rendered.json
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1.9.0
+        uses: aws-actions/amazon-ecs-render-task-definition@v1.9.1
         with:
           task-definition: task-definition-rendered.json
           container-name: ${{ inputs.ecs_container_name }}
           image: ${{ inputs.image_name }}
       - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.3
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.4
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ inputs.ecs_service_name }}
