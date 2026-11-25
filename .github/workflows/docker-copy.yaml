@@ -42,7 +42,7 @@ jobs:
           role-to-assume: ${{ secrets.old_image_role }}
       - name: Login to old ECR
         id: login-ecr-old
-        uses: aws-actions/amazon-ecr-login@v2.1.7
+        uses: aws-actions/amazon-ecr-login@v2.2.0
       - name: Pull image from old ECR
         id: pull-image
         env:
@@ -61,7 +61,7 @@ jobs:
           role-to-assume: ${{ secrets.new_image_role }}
       - name: Login to new ECR
         id: login-ecr-new
-        uses: aws-actions/amazon-ecr-login@v2.1.7
+        uses: aws-actions/amazon-ecr-login@v2.2.0
       - name: Push image to new ECR
         id: push-image
         env:
